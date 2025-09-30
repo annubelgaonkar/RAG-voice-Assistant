@@ -9,6 +9,5 @@ import java.util.List;
 @Builder
 public class AskResponse {
     private String answer;           // final text to TTS
-    private List<CitationDTO> citations;
     private long latencyMs;
 }

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice RAG Customer-Care Assistant</title>
+    <style>
+        :root { --bg:#0b1020; --card:#121933; --ink:#eaf2ff; --muted:#9fb4ff; --accent:#6aa7ff; }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: linear-gradient(180deg, #0b1020, #0e1430); color: var(--ink); }
+        .wrap { max-width: 860px; margin: 40px auto; padding: 16px; }
+        .card { background: var(--card); border: 1px solid #223; border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+        h1 { margin: 0 0 8px; font-size: 24px; }
+        .muted { color: var(--muted); font-size: 14px; }
+        .row { display:flex; gap: 12px; align-items:center; flex-wrap: wrap; margin-top: 12px; }
+        button { background: var(--accent); color:#04112e; border: 0; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        button.secondary { background: transparent; color: var(--ink); border: 1px solid #2b3a66; }
+        button:disabled { opacity:.6; cursor:not-allowed; }
+        .pill { display:inline-flex; align-items:center; gap:8px; border:1px solid #2b3a66; border-radius:999px; padding:6px 10px; color:var(--muted); font-size:13px; }
+        .log { margin-top: 16px; }
+        .area { background:#0e1530; border:1px solid #223; border-radius:12px; padding:12px; min-height: 80px; white-space: pre-wrap; }
+        .label { font-size:12px; color:var(--muted); margin:10px 0 6px; text-transform: uppercase; letter-spacing:.08em; }
+        .cite { margin-top:8px; font-size: 13px; color:#bcd1ff; opacity:.9; }
+        .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+        @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+        a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1>Voice RAG Customer-Care Assistant</h1>
+        <div class="muted">Hold to speak, release to send. Say “check order <em>ORD123</em>” for order status.</div>
+
+        <div class="row">
+            <button id="holdBtn">🎙️ Hold to Talk</button>
+            <button id="stopTtsBtn" class="secondary">🛑 Stop Speaking</button>
+            <span id="status" class="pill">idle</span>
+        </div>
+
+        <div class="grid">
+            <div>
+                <div class="label">Transcript</div>
+                <div id="transcript" class="area"></div>
+            </div>
+            <div>
+                <div class="label">Answer</div>
+                <div id="answer" class="area"></div>
+                <div id="citations" class="cite"></div>
+            </div>
+        </div>
+
+        <div class="log">
+            <div class="label">Debug</div>
+            <div id="debug" class="area" style="min-height:50px;"></div>
+        </div>
+
+        <div style="margin-top:10px" class="muted">
+            Requires Chrome/Edge desktop or Android (Web Speech API). HTTPS or <code>localhost</code> for mic permission.
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        const holdBtn = document.getElementById('holdBtn');
+        const stopTtsBtn = document.getElementById('stopTtsBtn');
+        const statusEl = document.getElementById('status');
+        const transcriptEl = document.getElementById('transcript');
+        const answerEl = document.getElementById('answer');
+        const citationsEl = document.getElementById('citations');
+        const debugEl = document.getElementById('debug');
+
+        // --- Speech Recognition (STT)
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let rec, recognizing = false, transcript = '';
+        if (SR) {
+            rec = new SR();
+            rec.lang = 'en-US';
+            rec.interimResults = true;
+            rec.continuous = true;
+
+            rec.onstart = () => setStatus('listening…');
+            rec.onerror = e => log('STT error: ' + e.error);
+            rec.onend = () => {
+                recognizing = false;
+                setStatus('idle');
+                // On release, we already sent the final transcript from mouseup/touchend.
+            };
+            rec.onresult = (ev) => {
+                let txt = '';
+                for (let i=ev.resultIndex; i<ev.results.length; i++) {
+                    txt += ev.results[i][0].transcript;
+                }
+                transcript = txt.trim();
+                transcriptEl.textContent = transcript;
+                // Barge-in: if TTS is speaking and user starts uttering, stop TTS
+                if (speechSynthesis.speaking) speechSynthesis.cancel();
+            };
+        } else {
+            setStatus('speech recognition unsupported');
+            holdBtn.disabled = true;
+            log('This browser does not support Web Speech API (STT).');
+        }
+
+        // --- Text to Speech (TTS)
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.0; u.pitch = 1.0;
+            u.onstart = () => setStatus('speaking…');
+            u.onend = () => setStatus('idle');
+            speechSynthesis.speak(u);
+        }
+        stopTtsBtn.onclick = () => { if (speechSynthesis.speaking) speechSynthesis.cancel(); setStatus('idle'); };
+
+        // --- UI helpers
+        function setStatus(s){ statusEl.textContent = s; }
+        function log(s){ debugEl.textContent = (s + '\n' + debugEl.textContent).slice(0, 4000); }
+
+        // --- Intent routing
+        // Very lightweight heuristic:
+        // "check order ORD123", "order status 789", "track order #1001"
+        function maybeExtractOrderId(q){
+            const m = q.match(/(?:order(?:\s*#|\s*id|\s*number)?\s*)([A-Z0-9\-]{3,})/i);
+            return m ? m[1].replace(/[^\w\-]/g,'').toUpperCase() : null;
+        }
+
+        // --- Call backend
+        async function askRag(query){
+            const res = await fetch('/api/ask', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ query, enableBargeIn: true })
+            });
+            if (!res.ok) throw new Error('RAG HTTP ' + res.status);
+            return res.json();
+        }
+        async function getOrderStatus(orderId){
+            const res = await fetch('/api/order-status?orderId=' + encodeURIComponent(orderId));
+            if (!res.ok) throw new Error('ORDER HTTP ' + res.status);
+            return res.json();
+        }
+
+        // --- Interaction flow
+        const startListening = () => { if (!rec || recognizing) return;
+            // barge-in: stop TTS when user starts talking
+            if (speechSynthesis.speaking) speechSynthesis.cancel();
+            recognizing = true; rec.start();
+        };
+        const stopListeningAndSend = async () => {
+            if (!rec) return;
+            try { rec.stop(); } catch {}
+            recognizing = false;
+            const q = transcript.trim();
+            if (!q) return;
+
+            answerEl.textContent = '';
+            citationsEl.textContent = '';
+            setStatus('thinking…');
+
+            try {
+                const maybeId = maybeExtractOrderId(q);
+                if (maybeId) {
+                    log('Detected order intent with ID: ' + maybeId);
+                    const data = await getOrderStatus(maybeId);
+                    const text = `Order ${data.orderId} is ${data.status}. ETA ${data.eta}.`;
+                    answerEl.textContent = text;
+                    speak(text);
+                    citationsEl.textContent = '';
+                } else {
+                    const data = await askRag(q);
+                    answerEl.textContent = data.answer || '';
+                    // show short citations
+                    if (data.citations && data.citations.length) {
+                        const sources = [...new Set(data.citations.map(c => c.source))].join(', ');
+                        citationsEl.textContent = `(from ${sources})`;
+                    } else {
+                        citationsEl.textContent = '';
+                    }
+                    if (data.answer) speak(data.answer);
+                }
+                setStatus('idle');
+            } catch (e) {
+                setStatus('idle');
+                const msg = 'Error: ' + (e?.message || e);
+                log(msg);
+                answerEl.textContent = 'Sorry, something went wrong.';
+                if (speechSynthesis.speaking) speechSynthesis.cancel();
+            }
+        };
+
+        // --- “Hold to talk” UX
+        // Mouse
+        holdBtn.addEventListener('mousedown', startListening);
+        window.addEventListener('mouseup', stopListeningAndSend);
+        // Touch
+        holdBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); startListening(); }, {passive:false});
+        window.addEventListener('touchend', (e)=>{ e.preventDefault(); stopListeningAndSend(); }, {passive:false});
+
+        // Allow click to toggle if user prefers taps
+        holdBtn.addEventListener('click', (e)=>{ e.preventDefault(); });
+
+    })();
+</script>
+</body>
+</html>

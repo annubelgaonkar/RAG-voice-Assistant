@@ -1,4 +1,7 @@
 package dev.anuradha.voiceragassistant.rag;
 
-public class LlmClient {
+import java.util.List;
+
+public interface LlmClient {
+    String answer(String userQuery, List<String> contexts);
 }
