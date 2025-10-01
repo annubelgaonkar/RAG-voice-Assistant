@@ -2,7 +2,7 @@ package dev.anuradha.voiceragassistant.ingest;
 
 import dev.anuradha.voiceragassistant.rag.TextChunker;
 import dev.anuradha.voiceragassistant.rag.embeddings.EmbeddingClient;
-import dev.anuradha.voiceragassistant.rag.VectorRecord;
+import dev.anuradha.voiceragassistant.model.dto.VectorRecord;
 import dev.anuradha.voiceragassistant.rag.VectorStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;

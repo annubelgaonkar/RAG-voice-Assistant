@@ -1,10 +1,12 @@
 package dev.anuradha.voiceragassistant.rag;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "app.llm.provider", havingValue = "local", matchIfMissing = true)
 public class LocalStubLlmClient implements LlmClient{
 
     @Override

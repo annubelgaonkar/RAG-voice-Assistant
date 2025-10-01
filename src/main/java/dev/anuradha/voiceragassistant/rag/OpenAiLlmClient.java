@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.anuradha.voiceragassistant.config.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import java.net.URI;
@@ -17,6 +18,7 @@ import java.util.StringJoiner;
 @Component
 @Primary
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.llm.provider", havingValue = "openai")
 public class OpenAiLlmClient implements LlmClient {
 
     private final AppProperties props;

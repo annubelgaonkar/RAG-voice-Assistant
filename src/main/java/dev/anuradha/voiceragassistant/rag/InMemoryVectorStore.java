@@ -1,5 +1,6 @@
 package dev.anuradha.voiceragassistant.rag;
 
+import dev.anuradha.voiceragassistant.model.dto.VectorRecord;
 import dev.anuradha.voiceragassistant.util.Cosine;
 import org.springframework.stereotype.Component;
 

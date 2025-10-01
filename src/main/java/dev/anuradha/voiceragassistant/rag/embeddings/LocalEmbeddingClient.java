@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 
+
 @Component
 @ConditionalOnProperty(name = "app.embeddings.provider", havingValue = "local", matchIfMissing = true)
 public class LocalEmbeddingClient implements EmbeddingClient{
