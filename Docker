@@ -12,7 +12,10 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/app.jar /app/app.jar
 
-# Spring should bind to Vercel's PORT env
+# Vercel's Docker runtime routes to port 3000 by convention
+ENV PORT=3000
 ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-EXPOSE 8080
-CMD ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar /app/app.jar"]
+EXPOSE 3000
+
+# Bind Spring to the given PORT (3000 on Vercel)
+CMD ["sh", "-c", "java -Dserver.port=${PORT} -Dserver.address=0.0.0.0 -jar /app/app.jar"]
