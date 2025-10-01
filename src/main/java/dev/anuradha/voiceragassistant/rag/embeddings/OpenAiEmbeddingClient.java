@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 //import dev.anuradha.voiceragassistant.config.AppProperties;
 import dev.anuradha.voiceragassistant.config.AppProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.List;
 @Component
 @Primary
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.embeddings.provider", havingValue = "openai")
 public class OpenAiEmbeddingClient implements EmbeddingClient{
     private final AppProperties props;
     private final ObjectMapper mapper = new ObjectMapper();
