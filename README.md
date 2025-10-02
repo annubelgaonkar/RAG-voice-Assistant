@@ -40,7 +40,7 @@ Supports **speech-to-text**, **vector search**, **LLM answering**, **text-to-spe
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/your-username/RAG-voice-Assistant.git
+git clone https://github.com/annubelgaonkar/RAG-voice-Assistant.git
 cd RAG-voice-Assistant
 ```
 2️⃣ Set environment variables
