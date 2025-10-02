@@ -4,14 +4,17 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn -q -e -DskipTests dependency:go-offline
 COPY src ./src
-RUN mvn -q -DskipTests package && cp target/*.jar /app/app.jar
+RUN mvn -q -DskipTests package
 
 # ---------- Run stage ----------
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/app.jar /app/app.jar
+# copy the boot jar
+COPY --from=build /app/target/*-SNAPSHOT.jar /app/app.jar
 
-ENV PORT=3000
+# helpful defaults for containers
 ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-EXPOSE 3000
-CMD ["sh", "-c", "java -Dserver.port=${PORT} -Dserver.address=0.0.0.0 -jar /app/app.jar"]
+# Vercel sets PORT; Spring reads server.port=${PORT:8080}
+EXPOSE 8080
+
+CMD ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar /app/app.jar"]
