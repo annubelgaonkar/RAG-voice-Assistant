@@ -3,7 +3,7 @@
 A **voice-enabled customer care assistant** that answers user questions by retrieving from a small FAQ knowledge base using a **Retrieval-Augmented Generation (RAG)** pipeline.  
 Supports **speech-to-text**, **vector search**, **LLM answering**, **text-to-speech**, and **order status** stub intent.
 
-🌐 **Live Demo:** 👉 [https://rag-voice-assistant-1.onrender.com](https://rag-voice-assistant-1.onrender.com)
+🌐 **Live Demo:** 👉 [https://rag-voice-assistant-2.onrender.com/](https://rag-voice-assistant-2.onrender.com/)
 
 ---
 
@@ -90,7 +90,8 @@ Free tier sleeps after inactivity.
 
 To ingest FAQs into the vector store:
 ```bash
-curl -X POST https://rag-voice-assistant-1.onrender.com/api/ingest
+curl -X POST https://rag-voice-assistant-2.onrender.com/api/ingest
+
 ```
 Expected:
 ```bash
@@ -102,18 +103,18 @@ Expected:
 
 🔸 Ask a Question (PowerShell)
 ```bash
-Invoke-RestMethod -Uri "https://rag-voice-assistant-1.onrender.com/api/ask" `
+Invoke-RestMethod -Uri "https://rag-voice-assistant-2.onrender.com/api/ask" `
   -Method POST `
   -ContentType "application/json" `
   -Body '{"query":"What is your returns policy?"}'
 ```
 🔸 Ask a Question (curl - Windows CMD)
 ```bash
-curl -X POST "https://rag-voice-assistant-1.onrender.com/api/ask" -H "Content-Type: application/json" -d "{\"query\":\"What is your returns policy?\"}"
+curl -X POST "https://rag-voice-assistant-2.onrender.com/api/ask" -H "Content-Type: application/json" -d "{\"query\":\"What is your returns policy?\"}"
 ```
 🔸 Order Status (stub)
 ```bash
-Invoke-RestMethod -Uri "https://rag-voice-assistant-1.onrender.com/api/order-status?orderId=ORD123" -Method GET
+Invoke-RestMethod -Uri "https://rag-voice-assistant-2.onrender.com/api/order-status?orderId=ORD123" -Method GET
 ```
 🧪 Example Response
 ```bash
